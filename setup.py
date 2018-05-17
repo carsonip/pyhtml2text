@@ -27,7 +27,8 @@ REQUIRES_PYTHON = '>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*'
 VERSION = None
 
 REQUIRED = [
-    'cffi>=1.0.0, six',
+    'cffi>=1.0.0',
+    'six>=1.0.0',
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
