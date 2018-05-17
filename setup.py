@@ -3,12 +3,19 @@
 
 import io
 import os
-import sys
-from shutil import rmtree, copy2
 import subprocess
+import sys
+from distutils.command.build import build
+from shutil import rmtree, copy2
 
 from setuptools import find_packages, setup, Command
+from setuptools.command.build_ext import build_ext
 from setuptools.command.install import install
+
+try:
+    from wheel.bdist_wheel import bdist_wheel
+except ImportError:
+    bdist_wheel = None
 
 # Package meta-data.
 NAME = 'pyhtml2text'
@@ -34,9 +41,11 @@ with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 about = {}
 if not VERSION:
     with open(os.path.join(here, NAME, '__version__.py')) as f:
-        exec(f.read(), about)
+        exec (f.read(), about)
 else:
     about['__version__'] = VERSION
+
+cmdclass = {}
 
 
 class UploadCommand(Command):
@@ -76,13 +85,50 @@ class UploadCommand(Command):
         sys.exit()
 
 
+def build_dep():
+    command = './configure && make'
+    process = subprocess.Popen(command, shell=True, cwd=os.path.join(here, 'c', 'html2text'))
+    process.wait()
+    copy2(os.path.join(here, 'c', 'html2text', 'libhtml2text.so'), os.path.join(here, NAME))
+
+
 class CustomInstall(install):
     def run(self):
-        command = './configure && make'
-        process = subprocess.Popen(command, shell=True, cwd='c/html2text')
-        process.wait()
-        copy2('c/html2text/libhtml2text.so', os.path.join(here, NAME))
+        build_dep()
         install.run(self)
+
+
+class CustomBuildExt(build_ext):
+    def run(self):
+        build_dep()
+        build_ext.run(self)
+
+
+class CustomBuild(build):
+    def get_sub_commands(self):
+        # Force "build_ext" invocation.
+        commands = build.get_sub_commands(self)
+        for c in commands:
+            if c == 'build_ext':
+                return commands
+        return ['build_ext'] + commands
+
+
+cmdclass.update({'build': CustomBuild,
+                 'build_ext': CustomBuildExt,
+                 'install': CustomInstall,
+                 })
+
+# https://github.com/numba/llvmlite/blob/master/setup.py
+if bdist_wheel:
+    class CustomBDistWheel(bdist_wheel):
+        def run(self):
+            build_dep()
+            # Run wheel build command
+            bdist_wheel.run(self)
+
+
+    cmdclass.update({'bdist_wheel': CustomBDistWheel})
 
 # Where the magic happens:
 setup(
@@ -103,9 +149,5 @@ setup(
     license='GPLv2',
     classifiers=[],
     package_data={NAME: ['libhtml2text.so']},
-    # $ setup.py publish support.
-    cmdclass={
-        'upload': UploadCommand,
-        'install': CustomInstall,
-    },
+    cmdclass=cmdclass,
 )
