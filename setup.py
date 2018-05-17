@@ -4,9 +4,11 @@
 import io
 import os
 import sys
-from shutil import rmtree
+from shutil import rmtree, copy2
+import subprocess
 
 from setuptools import find_packages, setup, Command
+from setuptools.command.install import install
 
 # Package meta-data.
 NAME = 'pyhtml2text'
@@ -74,6 +76,14 @@ class UploadCommand(Command):
         sys.exit()
 
 
+class CustomInstall(install):
+    def run(self):
+        command = './configure && make'
+        process = subprocess.Popen(command, shell=True, cwd='c/html2text')
+        process.wait()
+        copy2('c/html2text/libhtml2text.so', os.path.join(here, NAME))
+        install.run(self)
+
 # Where the magic happens:
 setup(
     name=NAME,
@@ -90,11 +100,12 @@ setup(
     #     'console_scripts': ['mycli=mymodule:cli'],
     # },
     install_requires=REQUIRED,
-    include_package_data=True,
     license='GPLv2',
     classifiers=[],
+    package_data={NAME: ['libhtml2text.so']},
     # $ setup.py publish support.
     cmdclass={
         'upload': UploadCommand,
+        'install': CustomInstall,
     },
 )
