@@ -13,9 +13,9 @@ def test_large_html():
 
 
 def test_br_in_div():
-    # There should be only 1 \n instead of 2 unless there is something after <br>
+    # There should be only 2 \n instead of 3 unless there is something after <br>
     html = '<body>foo<div><br></div>bar</body>'
-    assert html2text(html) == 'foo\nbar'
+    assert html2text(html) == 'foo\n\nbar\n'
 
     html = '<body>foo<div><br>bar</div>baz</body>'
-    assert html2text(html) == 'foo\nbar\nbaz'
+    assert html2text(html) == 'foo\n\nbar\nbaz\n'
