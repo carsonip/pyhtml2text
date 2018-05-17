@@ -43,13 +43,10 @@ LIBSTDCXX_LIBS      = @LIBSTDCXX_LIBS@
 AUTO_PTR_BROKEN     = @AUTO_PTR_BROKEN@
 MAKEDEPEND_INCLUDES = @MAKEDEPEND_INCLUDES@
 
-DEBUG=-O2 -g
-
 INCLUDES  = $(LIBSTDCXX_INCLUDES)
 DEFINES   = -DVERSION=$(VERSION) $(SYS_POLL_MISSING) $(BOOL_DEFINITION) $(EXPLICIT) $(AUTO_PTR_BROKEN)
-CPPFLAGS  = $(INCLUDES) $(DEFINES)
-CXXFLAGS  = $(CPPFLAGS) $(DEBUG)
-LDFLAGS   = $(DEBUG)
+CPPFLAGS  += $(INCLUDES) $(DEFINES)
+CXXFLAGS  += $(CPPFLAGS)
 LOADLIBES = $(LIBSTDCXX_LIBS) $(SOCKET_LIBRARIES)
 
 .SUFFIXES : .C .o
@@ -68,7 +65,7 @@ all : html2text
 	@echo '"/usr/local/bin", "/usr/local/man/man1" and "/usr/local/man/man5").';
 	@echo
 
-OBJS = html2text.o html.o HTMLControl.o HTMLParser.o Area.o format.o sgml.o table.o urlistream.o Properties.o cmp_nocase.o
+OBJS = html2text.o html.o HTMLControl.o HTMLParser.o Area.o format.o sgml.o table.o Properties.o cmp_nocase.o
 
 html2text : $(OBJS) $(LIBSTDCXX_LIBS)
 	$(CXX) $(LDFLAGS) $(OBJS) $(LOADLIBES) $(LDLIBS) -o $@

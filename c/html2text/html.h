@@ -61,6 +61,11 @@
 
 /* ------------------------------------------------------------------------- */
 
+enum {ASCII, ISO8859, UTF8};
+#define USE_ISO8859 (use_encoding == ISO8859)
+#define USE_ASCII (use_encoding == ASCII)
+#define USE_UTF8 (use_encoding == UTF8)
+
 #define LATIN1_nbsp   160
 #define LATIN1_iexcl  161
 #define LATIN1_cent   162
@@ -431,13 +436,19 @@ struct Style {
   void unparse(ostream &, ostream_manipulator separator) const;
 };
 
+struct Meta {
+  auto_ptr<list<TagAttribute> > attributes;    // HTTP-EQUIV NAME CONTENT
+
+  void unparse(ostream &, ostream_manipulator separator) const;
+};
+
 struct Head {
   auto_ptr<PCData>              title;
   auto_ptr<list<TagAttribute> > isindex_attributes; // PROMPT
   auto_ptr<list<TagAttribute> > base_attributes;    // HREF
   list<auto_ptr<Script> >       scripts;
   list<auto_ptr<Style> >        styles;
-  auto_ptr<list<TagAttribute> > meta_attributes;    // HTTP-EQUIV NAME CONTENT
+  list<auto_ptr<Meta> >         metas;
   auto_ptr<list<TagAttribute> > link_attributes;    // HREF REL REV TITLE
 
   void unparse(ostream &, ostream_manipulator separator) const;

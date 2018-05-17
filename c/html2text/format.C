@@ -56,6 +56,8 @@ using std::flush;
 #define nelems(array) (sizeof(array) / sizeof((array)[0]))
 #endif
 
+extern int use_encoding;
+
 /* ------------------------------------------------------------------------- */
 
 static Line *line_format(const list<auto_ptr<Element> > *elements);
@@ -560,7 +562,7 @@ Heading::format(Area::size_type w, int halign) const
     "LEFT",   Area::LEFT,
     "CENTER", Area::CENTER,
     "RIGHT",  Area::RIGHT,
-    0
+    NULL
   );
 
   static char cell_attributes[7];
@@ -682,7 +684,7 @@ Paragraph::format(Area::size_type w, int halign) const
     "LEFT",   Area::LEFT,
     "CENTER", Area::CENTER,
     "RIGHT",  Area::RIGHT,
-    0
+    NULL
   );
 
   static BlockFormat bf("P");
@@ -752,7 +754,7 @@ Applet::format(Area::size_type w, int /*halign*/ ) const
       "LEFT",   Area::LEFT,
       "MIDDLE", Area::CENTER,
       "RIGHT",  Area::RIGHT,
-      0
+      NULL
     );
     Area *a = ::format(content.get(), w, halign);
     if (a) return a;
@@ -802,7 +804,7 @@ Division::format(Area::size_type w, int halign) const
     "LEFT",   Area::LEFT,
     "CENTER", Area::CENTER,
     "RIGHT",  Area::RIGHT,
-    0
+    NULL
   ));
 }
 
@@ -882,7 +884,7 @@ Input::line_format() const
     res = '[' + string(size, '*') + ']';
   } else
   if (cmp_nocase(type, "CHECKBOX") == 0) {
-    res = checked ? '*' : LATIN1_ordm; // "ordm" looks like a superscript zero.
+    res = checked ? string("*") : (USE_UTF8 ? string("\u2070") : string(1, LATIN1_ordm)); // "ordm" looks like a superscript zero.
   } else
   if (cmp_nocase(type, "RADIO") == 0) {
     res = checked ? '#' : 'o';
@@ -1168,10 +1170,13 @@ NoBreak::line_format() const
   Line *l(::line_format(content.get()));
   if (!l) return 0;
 
+  // don't insert ISO-8859-1 non-breaking spaces, it breaks UTF-8 processing
+  /*
   for (Line::size_type i = 0; i < l->length(); ++i) {
     Cell &c((*l)[i]);
     if (c.character == ' ') c.character = LATIN1_nbsp;
   }
+  */
   return l;
 }
 
@@ -1210,6 +1215,7 @@ make_up(const Line &line, Area::size_type w, int halign)
     }
 
     Line::size_type to = from + 1;
+    int to_from;
 
     Line::size_type lbp = (Line::size_type) -1; // "Last break position".
 
@@ -1238,18 +1244,20 @@ make_up(const Line &line, Area::size_type w, int halign)
         to++;
       }
 
-      if (to - from > w && lbp != (Area::size_type) -1) { to = lbp; break; }
+      if (line.utf_length(from,to) > w && lbp != (Area::size_type) -1) 
+                    { to = lbp; break; }
     }
 
+    to_from = line.utf_length(from,to);
     /*
      * Copy the "from...to" range from the "line" to the bottom of the "res"
      * Area.
      */
     Area::size_type x = 0;
     Area::size_type len = to - from;
-    if (halign == Area::LEFT || len >= w) { ;                   } else
-    if (halign == Area::CENTER)           { x += (w - len) / 2; } else
-    if (halign == Area::RIGHT)            { x += w - len;       }
+    if (halign == Area::LEFT || to_from >= w) { ;                   } else
+    if (halign == Area::CENTER)           { x += (w - to_from) / 2; } else
+    if (halign == Area::RIGHT)            { x += w - to_from;       }
     res->insert(line.cells() + from, len, x, res->height());
 
     /*
@@ -1632,7 +1640,7 @@ ListFormat::get_type(
     "A",         UPPER_ALPHA,
     "i",         LOWER_ROMAN,
     "I",         UPPER_ROMAN,
-    0
+    NULL
   );
 }
 

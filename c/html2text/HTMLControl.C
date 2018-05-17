@@ -372,7 +372,7 @@ HTMLControl::yylex2(yy_HTMLParser_stype *value_return, int *tag_type_return)
             attribute.first = c;
             for (;;) {
               c = get_char();
-              if (!isalpha(c) && c != '-' && c != '_' && c != ':') break;
+              if (!isalnum(c) && c != '-' && c != '_' && c != ':') break;
 	      // Same as in line 352 - Arno
               attribute.first += c;
             }

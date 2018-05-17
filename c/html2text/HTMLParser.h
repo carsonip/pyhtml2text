@@ -487,7 +487,7 @@ static const int END_VAR;
  /* decl const */
 public:
  int YY_HTMLParser_PARSE(YY_HTMLParser_PARSE_PARAM);
- virtual void YY_HTMLParser_ERROR(char *) YY_HTMLParser_ERROR_BODY;
+ virtual void YY_HTMLParser_ERROR(const char *) YY_HTMLParser_ERROR_BODY;
 #ifdef YY_HTMLParser_PURE
 #ifdef YY_HTMLParser_LSP_NEEDED
  virtual int  YY_HTMLParser_LEX(YY_HTMLParser_STYPE *YY_HTMLParser_LVAL,YY_HTMLParser_LTYPE *YY_HTMLParser_LLOC) YY_HTMLParser_LEX_BODY;

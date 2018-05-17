@@ -38,7 +38,6 @@
 /* ------------------------------------------------------------------------- */
 
 #include "HTMLParser.h"
-#include "urlistream.h"
 #include <istream>
 
 using std::istream;
@@ -48,7 +47,7 @@ using std::istream;
 class HTMLControl : public HTMLParser {
 
 public:
-  HTMLControl(urlistream &is_, bool debug_scanner_, bool debug_parser_) :
+  HTMLControl(istream &is_, bool debug_scanner_, bool debug_parser_) :
     HTMLParser(),
     current_line(1),
     current_column(0),
@@ -84,7 +83,7 @@ private:
 
   bool debug_scanner;
 
-  urlistream &is;
+  istream &is;
   int     ungotten_chars[5];
   int     number_of_ungotten_chars;
 };

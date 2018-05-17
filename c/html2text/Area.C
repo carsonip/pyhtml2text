@@ -36,9 +36,12 @@
 #include <iostream>
 
 #include "Area.h"
+#include "html.h"
 #include "string.h"
 
 #define LATIN1_nbsp 160
+
+extern int use_encoding;
 
 /* ------------------------------------------------------------------------- */
 
@@ -80,6 +83,53 @@ Line::~Line()
 }
 
 /* ------------------------------------------------------------------------- */
+
+/*           utf_length() and utf_width()       
+ *
+ *     Very simplified algorithm of calculating length of UTF-8
+ *   string. No check for errors. Counting only ASCII bytes and
+ *   leading bytes of UTF-8 multibyte sequences. All bytes like
+ *   10xxxxxx are dropped. If USE_UTF8 is false then returns
+ *   usual length.               --YS
+ */
+
+size_t utf8_aux_count(char ch)
+{
+	if((ch & 0xe0) == 0xc0)
+	{
+		return 1;
+	}
+	else if((ch & 0xf0) == 0xe0)
+	{
+		return 2;
+	}
+	else if ((ch & 0xf8) == 0xf0)
+	{
+		return 3;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+unsigned int
+Line::utf_length(size_type f, size_type t) const
+{
+	size_type m = (t < length_ ? t : length_);
+	size_type r = m - f;
+	if(USE_UTF8)
+	{
+		for (int i = f; i < m; i++)
+		{
+			char& ch = cells_[i].character;
+			size_type aux_count = utf8_aux_count(ch);
+			r -= aux_count;
+			i += aux_count;
+		}
+	}
+	return r;
+}
 
 void
 Line::resize(size_type l)
@@ -234,6 +284,28 @@ Area::operator>>=(size_type rs)
     }
   }
   return *this;
+}
+
+unsigned int
+Area::utf_width()
+{
+  size_type r = width_;
+  if(USE_UTF8) { r = 0;
+    for (size_type yy = 0; yy < height_; yy++) {
+	  int i = width_ - 1;
+      while((i >= 0) && isspace(cells_[yy][i].character))
+	  {
+		  --i;
+	  }
+      size_type aux_count_sum = 0;
+      for (; i >= 0; i--) {
+		aux_count_sum += utf8_aux_count(cells_[yy][i].character);
+      }
+	  size_type r1 = width_ - aux_count_sum;
+      if(r < r1) r = r1;
+    }
+  }
+  return r;
 }
 
 void
@@ -439,7 +511,7 @@ operator<<(ostream &os, const Area &a)
       char c = p->character;
       char a = p->attribute;
 
-      if (c == (char) LATIN1_nbsp) c = ' ';
+      if (c == (char) LATIN1_nbsp && !USE_UTF8) c = ' ';
 
       if (a == Cell::NONE) {
         os << c;
