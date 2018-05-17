@@ -604,4 +604,197 @@ main(int argc, char **argv)
   return 0;
 }
 
+char *html2text(char *html)
+{
+
+  bool       mode              = MyParser::PRINT_AS_ASCII;
+  bool       debug_scanner     = false;
+  bool       debug_parser      = false;
+//  const char *home             = getenv("HOME");
+//  string     rcfile            = string(home ? home : "") + "/.html2textrc";
+//  const char *style            = "compact";
+  int        width             = 79;
+  bool       use_backspaces    = false;
+  bool       use_meta          = false;
+
+  use_backspaces = false;
+
+//  /*
+//    * Set up formatting: First, set some formatting properties depending on
+//    * the "-style" command line option.
+//    */
+//  if (!strcmp(style, "compact")) {
+//    ;
+//  } else
+//  if (!strcmp(style, "pretty")) {
+//
+//    /*
+//        * The "pretty" style was kindly supplied by diligent user Rolf Niepraschk.
+//        */
+//    static const struct {
+//      const char *key;
+//      const char *value;
+//    } properties[] = {
+//        { "OL.TYPE",                  "1" },
+//        { "OL.vspace.before",         "1" },
+//        { "OL.vspace.after",          "1" },
+//        { "OL.indents",               "5" },
+//        { "UL.vspace.before",         "1" },
+//        { "UL.vspace.after",          "1" },
+//        { "UL.indents",               "2" },
+//        { "DL.vspace.before",         "1" },
+//        { "DL.vspace.after",          "1" },
+//        { "DT.vspace.before",         "1" },
+//        { "DIR.vspace.before",        "1" },
+//        { "DIR.indents",              "2" },
+//        { "MENU.vspace.before",       "1" },
+//        { "MENU.vspace.after",        "1" },
+//        { "DT.indent",                "2" },
+//        { "DD.indent",                "6" },
+//        { "HR.marker",                "-" },
+//        { "H1.prefix",                ""  },
+//        { "H2.prefix",                ""  },
+//        { "H3.prefix",                ""  },
+//        { "H4.prefix",                ""  },
+//        { "H5.prefix",                ""  },
+//        { "H6.prefix",                ""  },
+//        { "H1.suffix",                ""  },
+//        { "H2.suffix",                ""  },
+//        { "H3.suffix",                ""  },
+//        { "H4.suffix",                ""  },
+//        { "H5.suffix",                ""  },
+//        { "H6.suffix",                ""  },
+//        { "H1.vspace.before",         "2" },
+//        { "H2.vspace.before",         "1" },
+//        { "H3.vspace.before",         "1" },
+//        { "H4.vspace.before",         "1" },
+//        { "H5.vspace.before",         "1" },
+//        { "H6.vspace.before",         "1" },
+//        { "H1.vspace.after",          "1" },
+//        { "H2.vspace.after",          "1" },
+//        { "H3.vspace.after",          "1" },
+//        { "H4.vspace.after",          "1" },
+//        { "H5.vspace.after",          "1" },
+//        { "H6.vspace.after",          "1" },
+//        { "TABLE.vspace.before",      "1" },
+//        { "TABLE.vspace.after",       "1" },
+//        { "CODE.vspace.before",       "0" },
+//        { "CODE.vspace.after",        "0" },
+//        { "BLOCKQUOTE.vspace.before", "1" },
+//        { "BLOCKQUOTE.vspace.after",  "1" },
+//        { "PRE.vspace.before",        "1" },
+//        { "PRE.vspace.after",         "1" },
+//        { "PRE.indent.left",          "2" },
+//        { "IMG.replace.noalt",        ""  },
+//        { "IMG.alt.prefix",           " " },
+//        { "IMG.alt.suffix",           " " },
+//        { 0, 0 }
+//    }, *p;
+//    for (p = properties; p->key; ++p) {
+//      Formatting::setProperty(p->key, p->value);
+//    }
+//  } else {
+//    std::cerr
+//        << "Unknown style \""
+//        << style
+//        << "\" specified -- try \"-help\"."
+//        << std::endl;
+//    ::exit(1);
+//  }
+//
+//  {
+//    std::ifstream ifs(rcfile.c_str());
+//    if (!ifs.rdbuf()->is_open()) ifs.open("/etc/html2textrc");
+//    if (ifs.rdbuf()->is_open()) {
+//      Formatting::loadProperties(ifs);
+//    }
+//  }
+
+  /*
+    * Set up printing.
+    */
+  Area::use_backspaces = use_backspaces;
+
+  std::ostringstream oss;
+  ostream  *osp;
+
+  osp = &oss;
+
+  bool output_is_tty = false;
+
+  const char *input_url = "-";
+
+  istream    *isp;
+  istream    *uis;
+  ifstream* infile = NULL;
+  stringstream input_stream;
+
+  std::istringstream    iss(html);
+  uis = &iss;
+
+  *uis >> noskipws;
+  std::copy(istream_iterator<char>(*uis), istream_iterator<char>(), ostream_iterator<char>(input_stream));
+
+  if (infile)
+  {
+    infile->close();
+    delete infile;
+  }
+
+  string from_encoding = "UTF-8";
+
+  bool result = true;
+  if (!from_encoding.empty())
+  {
+    // recode input
+    result = recode(input_stream, "UTF-8", from_encoding.data());
+  }
+  if (!result)
+  {
+    return NULL;
+  }
+
+  // real parsing now always process UTF-8 (except for ASCII mode)
+  if (use_encoding != ASCII)
+  {
+    use_encoding = UTF8;
+  }
+
+  stringstream output_stream;
+
+  // real parsing
+  input_stream.clear();
+  input_stream.seekg(0);
+  MyParser parser(
+      input_stream,
+      debug_scanner,
+      debug_parser,
+      output_stream,
+      mode,
+      width,
+      input_url
+  );
+  if (parser.yyparse() != 0) exit(1);
+
+  output_stream.clear();
+  output_stream.seekg(0);
+  output_stream >> noskipws;
+  std::copy(istream_iterator<char>(output_stream), istream_iterator<char>(), ostream_iterator<char>(*osp));
+
+  string s = oss.str();
+  const char *cstr = s.c_str();
+  char *ret = strdup(cstr);
+  return ret;
+}
+
+extern "C"
+{
+  extern char *cffi_html2text(char *html) {
+    return html2text(html);
+  }
+  extern void cffi_free(char *ret) {
+    free(ret);
+  }
+}
+
 /* ------------------------------------------------------------------------- */
