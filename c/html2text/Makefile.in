@@ -45,9 +45,10 @@ MAKEDEPEND_INCLUDES = @MAKEDEPEND_INCLUDES@
 
 INCLUDES  = $(LIBSTDCXX_INCLUDES)
 DEFINES   = -DVERSION=$(VERSION) $(SYS_POLL_MISSING) $(BOOL_DEFINITION) $(EXPLICIT) $(AUTO_PTR_BROKEN)
-CPPFLAGS  += $(INCLUDES) $(DEFINES)
+CPPFLAGS  += $(INCLUDES) $(DEFINES) -fPIC
 CXXFLAGS  += $(CPPFLAGS)
 LOADLIBES = $(LIBSTDCXX_LIBS) $(SOCKET_LIBRARIES)
+TARGET_LIB = libhtml2text.so
 
 .SUFFIXES : .C .o
 
@@ -58,7 +59,7 @@ LOADLIBES = $(LIBSTDCXX_LIBS) $(SOCKET_LIBRARIES)
 
 default : all
 
-all : html2text
+all : $(TARGET_LIB)
 	@echo ;
 	@echo 'Compilation completed. You may now move "html2text", "html2text.1.gz"';
 	@echo 'and "html2textrc.5.gz" to their installation directories (e.g.';
@@ -67,8 +68,8 @@ all : html2text
 
 OBJS = html2text.o html.o HTMLControl.o HTMLParser.o Area.o format.o sgml.o table.o Properties.o cmp_nocase.o
 
-html2text : $(OBJS) $(LIBSTDCXX_LIBS)
-	$(CXX) $(LDFLAGS) $(OBJS) $(LOADLIBES) $(LDLIBS) -o $@
+$(TARGET_LIB) : $(OBJS) $(LIBSTDCXX_LIBS)
+	$(CXX) $(LDFLAGS) $(OBJS) $(LOADLIBES) $(LDLIBS) -shared -o $@
 
 libstd/libstd.a :
 	cd libstd && $(MAKE)
@@ -113,7 +114,7 @@ clean clobber depend :
 
 clean : local-clean
 local-clean :
-	rm -f *.o *~ core html2text;
+	rm -f *.o *~ core html2text libhtml2text.so;
 
 clobber : local-clobber
 local-clobber : local-clean
