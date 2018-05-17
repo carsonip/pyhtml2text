@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import cffi
 import os
+import six
 
 ffi = cffi.FFI()
 ffi.cdef('char *cffi_html2text(char *html);'
@@ -12,12 +13,12 @@ __all__ = ['html2text']
 
 
 def html2text(html):
-    if isinstance(html, unicode):
+    if isinstance(html, six.text_type):
         html = html.encode('utf-8')
     x = C.cffi_html2text(html)
 
     if x == ffi.NULL:
         raise Exception('NULL')
-    s = bytes(ffi.string(x))
+    s = ffi.string(x)
     C.cffi_free(x)
     return s
