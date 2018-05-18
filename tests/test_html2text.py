@@ -8,7 +8,7 @@ def test_simple_html():
 
 
 def test_large_html():
-    html = b'<body><div>%s</div></body>' % (b'a' * 100000)
+    html = b'<body><div>' + (b'a' * 100000) + b'</div></body>'
     assert html2text(html) == (b'a' * 100000) + b'\n'
 
 
