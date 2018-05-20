@@ -1,4 +1,5 @@
-                   10.0B     1.0KiB    2.0KiB
------------  -----------  ---------  --------
-pyhtml2text  0.000293016  0.0270891  0.107092
-html2text    0.00128913   0.167868   0.650889
+Runtime (in seconds) of processing 10 times of various input sizes, best of 3: 
+                   10.0B    1.0KiB    2.0KiB
+-----------  -----------  --------  --------
+pyhtml2text  9.29832e-05  0.026082  0.103092
+html2text    0.000705004  0.166557  0.65018

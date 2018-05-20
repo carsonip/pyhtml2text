@@ -12,6 +12,7 @@ def sizeof_fmt(num, suffix='B'):
 
 
 NUMBER = 10
+REPEAT_COUNT = 3
 SIZE_LIST = [10, 1024, 2048]
 
 timers = {
@@ -27,7 +28,8 @@ for k, v in timers.items():
     results = []
     for s in SIZE_LIST:
         html = b'<div>' + (b'a' * s) + b'</div>'
-        results.append(v.timeit(NUMBER))
+        results.append(min(v.repeat(repeat=REPEAT_COUNT, number=NUMBER)))
     rows.append([k] + results)
 
+print('Runtime (in seconds) of processing %s times of various input sizes, best of %s: ' % (NUMBER, REPEAT_COUNT))
 print(tabulate(rows, headers=[''] + [sizeof_fmt(s) for s in SIZE_LIST]))
