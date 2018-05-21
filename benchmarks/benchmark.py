@@ -1,4 +1,5 @@
 import timeit
+import signal
 from tabulate import tabulate
 
 
@@ -11,9 +12,20 @@ def sizeof_fmt(num, suffix='B'):
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
 
+class Timeout(Exception):
+    pass
+
+
+def timeout_handler(signum, frame):
+    raise Timeout()
+
+
+signal.signal(signal.SIGALRM, timeout_handler)
+
 NUMBER = 10
 REPEAT_COUNT = 3
-SIZE_LIST = [10, 1024, 2048]
+TIMEOUT = 10
+SIZE_LIST = [10, 1024, 2 * 1024, 100 * 1024, 1024 * 1024]
 
 timers = {
     'pyhtml2text': timeit.Timer('html2text(html)',
@@ -28,7 +40,15 @@ for k, v in timers.items():
     results = []
     for s in SIZE_LIST:
         html = b'<div>' + (b'a' * s) + b'</div>'
-        results.append(min(v.repeat(repeat=REPEAT_COUNT, number=NUMBER)))
+        signal.alarm(TIMEOUT)
+        try:
+            t = min(v.repeat(repeat=REPEAT_COUNT, number=NUMBER))
+        except Timeout:
+            results.append('>%s' % TIMEOUT)
+        else:
+            signal.alarm(0)  # Cancel alarm
+            results.append(t)
+
     rows.append([k] + results)
 
 print('Runtime (in seconds) of processing %s times of various input sizes, best of %s: ' % (NUMBER, REPEAT_COUNT))
