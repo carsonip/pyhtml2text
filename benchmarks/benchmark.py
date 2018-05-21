@@ -31,7 +31,11 @@ timers = {
     'pyhtml2text': timeit.Timer('html2text(html)',
                                 setup='from pyhtml2text import html2text; from __main__ import html'),
     'html2text': timeit.Timer('h.handle(html)',
-                              setup='import html2text as python_html2text; h = python_html2text.HTML2Text();  from __main__ import html')
+                              setup='import html2text as python_html2text; h = python_html2text.HTML2Text();  from __main__ import html'),
+    'bs4+html.parser': timeit.Timer('BeautifulSoup(html, "html.parser").get_text()',
+                                    setup='from bs4 import BeautifulSoup; from __main__ import html'),
+    'bs4+lxml': timeit.Timer('BeautifulSoup(html, "lxml").get_text()',
+                             setup='from bs4 import BeautifulSoup; from __main__ import html'),
 }
 
 rows = []
